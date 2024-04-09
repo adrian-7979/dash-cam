@@ -32,7 +32,7 @@ sudo make install
 
 ## Output File
 The output file "eye" is in the subdirectory "eye-monitor", and can be run
-in Linux terminal with the command
+in Linux terminal with the command, after chanfing the directory to "eye-monitor"
 ```
 ./eye
 ```
