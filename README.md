@@ -28,6 +28,8 @@ This program also uses ALSA to play the alarm sound.
 ```
 sudo apt-get install libasound2-dev
 ```
+Additionally, pigpio also has to be downloaded from [here](https://abyz.me.uk/rpi/pigpio/index.html), for all GPIO functions. 
+
 ## Compilation and installation
 
 ```
