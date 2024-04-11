@@ -1,10 +1,23 @@
+#include <unistd.h>
+
+// Header file for Camera interfacing
 #include "libcam2opencv.h"
 #include <libcamera/libcamera.h>
 
-#include <unistd.h>
+// Header file for OpenCV
 #include <opencv2/opencv.hpp>
 
-/*****************************************************/
+// Header file for GPIO access
+#include <pigpio.h>
+
+// Defining constants
+#define buzzer 16 // buzzer attached to GPIO 16 (Pin 36)
+#define led_eye_detect 20 // LED attached to GPIO 20 (Pin38)
+#define relay 21 // relay attached to GPIO 21 (Pin40) (optional - to trigger eCall system)
+#define ON 1 
+#define OFF 0
+
+// Header file for playing sounds (.wav files)
 #include <alsa/asoundlib.h>
 // Function to play a sound file using ALSA
 void playSound(const char* filePath) {
@@ -54,9 +67,34 @@ void playSound(const char* filePath) {
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
 }
-/*******************************************************/
 
+// Function to initialize GPIO
+void initializeGPIO() {
+    if (gpioInitialise() < 0) {
+        std::cerr << "Error initializing GPIO library" << std::endl;
+        return;
+    }
 
+    // Set GPIO pin modes
+    gpioSetMode(buzzer, PI_OUTPUT);
+    gpioSetMode(led_eye_detect, PI_OUTPUT);
+    gpioSetMode(relay, PI_OUTPUT);
+
+    return;
+}
+
+// Function to clean up GPIO
+void cleanupGPIO() {
+    // Set GPIO pins back to input mode
+    gpioSetMode(buzzer, PI_INPUT);
+    gpioSetMode(led_eye_detect, PI_INPUT);
+    gpioSetMode(relay, PI_INPUT);
+
+    // Terminate pigpio library
+    gpioTerminate();
+}
+
+// Callback function
 struct MyCallback : Libcam2OpenCV::Callback {
    int frameCount=0;
    int frameEyeShut=0;
@@ -65,10 +103,9 @@ struct MyCallback : Libcam2OpenCV::Callback {
     
     virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata) {
 	
-//	if(frameCount<=120) //to limit total captured frames while debugging
-    
-    {
-	
+     // initialise GPIO 
+    initializeGPIO();
+     
      if(frameCount ==0){
         if(!face_cascade.load("haarcascade_frontalface_alt.xml") || !eye_cascade.load("haarcascade_eye.xml")) {
          std::cerr << "Error loading cascade classifiers!" << std::endl;
@@ -89,19 +126,23 @@ struct MyCallback : Libcam2OpenCV::Callback {
 
     // For each face, detect eyes
     for (const auto& face : faces) {
- //       cv::rectangle(frame, face, cv::Scalar(255, 0, 0), 2); // Draw rectangle around face
 
         // Define region of interest (ROI) for eyes within the face
         cv::Mat face_roi = gray_image(face);
         std::vector<cv::Rect> eyes;
         eye_cascade.detectMultiScale(face_roi, eyes);
 
-        // Draw rectangles around the detected eyes
+        // Draw rectangles and circles on required ROI (for debugging, uncomment below lines)
+   //   cv::rectangle(frame, face, cv::Scalar(255, 0, 0), 2); // Draw rectangle around face
    //     for (const auto& eye : eyes) {
    //         cv::Point eye_center(face.x + eye.x + eye.width/2, face.y + eye.y + eye.height/2);
    //         int radius = cvRound((eye.width + eye.height) * 0.25);
    //         cv::circle(frame, eye_center, radius, cv::Scalar(0, 255, 0), 2); // Draw circle around eye
    //     }
+        // Display the resulting image (for debugging, uncomment below lines)
+   //	 cv::imshow("Faces and Eyes Detection", frame);
+   //  	 cv::waitKey(0);
+   //  	 cv::destroyAllWindows();
 
         // Check if eyes were detected within the face
         if (!eyes.empty()) {
@@ -109,43 +150,65 @@ struct MyCallback : Libcam2OpenCV::Callback {
         }
     }
 
-    //Display FrameCount
+    // Display FrameCount
     std::cout << frameCount << std::endl;
     
     // Display appropriate message based on eyes detection
     if (eyes_detected) {
         std::cout << "Eyes Detected!" << std::endl;
-        frameEyeShut=0; //reset counter 
+        //reset counter
+        frameEyeShut = 0; 
+        // Turn ON the LED (indicate eyes are detected)
+        gpioWrite(led_eye_detect, ON); 
+        // Turn OFF buzzer 
+        gpioWrite(buzzer, OFF);
+        // Turn OFF relay(eCall system) 
+        gpioWrite(relay, OFF);
+         
     } 
-
     else {
         std::cout << "No eyes detected in the image!" << std::endl;
         frameEyeShut++; //increment counter
-        
-        if(frameEyeShut>5){
-        playSound("sound.wav"); // Replace with your sound file path
+        // Turn OFF the LED (indicate eyes are NOT detected)
+        gpioWrite(led_eye_detect, OFF); 
+    }    
+    
+    // if eyes are closed for short time
+    if(frameEyeShut>3){
+        // Play sound file 
+        playSound("sound.wav");
+        // Turn ON buzzer 
+        gpioWrite(buzzer, ON);
+         
+    }
+
+    // if eyes are closed for long time even after buzzer rings, trigger eCall system
+    if(frameEyeShut>15){
+        // Turn OFF relay(eCall system) 
+        gpioWrite(relay, OFF);
         frameEyeShut=0; //reset counter
-        }
     }
     
-       // Display the resulting image
- //	 cv::imshow("Faces and Eyes Detection", frame);
- //  	 cv::waitKey(0);
- //  	 cv::destroyAllWindows();
-    std::cout << frameEyeShut << std::endl; //print counter value
+    std::cout << "Eyes shut for "<< frameEyeShut << " frames" << std::endl; //print counter value
 
 	frameCount++;
     }
-    }
+    
 };
 
 // Main program
 int main(int argc, char *argv[]) {
-    std::cout << "Press any key to stop" << std::endl;
+    
     
     // create an instance of the camera class
     Libcam2OpenCV camera;
-
+    
+    // initialise GPIO 
+    initializeGPIO();
+    
+    
+    std::cout << "Press any key to stop" << std::endl;
+    
     // create an instance of the callback
     MyCallback myCallback;
 
@@ -166,6 +229,9 @@ int main(int argc, char *argv[]) {
 
     // stop the camera
     camera.stop();
+    
+    // set the GPIO pins back to input mode
+    cleanupGPIO();
 
     // that's it!
     printf("\n");
