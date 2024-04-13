@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
@@ -7,8 +8,6 @@ endif()
 project(EyeDetect
 	DESCRIPTION "Detect eyes"
 	LANGUAGES CXX)
-
-
 
 set (CMAKE_CXX_STANDARD 17)
 
@@ -28,8 +27,8 @@ endif()
 # For playing sound
 find_package(ALSA REQUIRED)
 
-# For GPIO
-#find_package(pigpio REQUIRED)
+#for threading
+find_package(Threads REQUIRED)
 
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.. ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS})
@@ -45,7 +44,7 @@ add_executable(eye
   eye.cpp
 )
 
-
+target_link_libraries (eye ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(eye PkgConfig::LIBCAMERA)
 target_link_libraries(eye ${OpenCV_LIBS})
 target_link_libraries(eye cam2opencv)
@@ -54,6 +53,10 @@ target_link_libraries(eye cam2opencv)
 target_include_directories(eye PRIVATE ${PIGPIO_INCLUDE_DIR})
 target_link_libraries(eye ${PIGPIO_LIBRARY})
 
+# Link pthreads library
+target_link_libraries(eye Threads::Threads)
+
+# Link wav sound player library
 target_link_libraries(eye ${ALSA_LIBRARY})
 target_include_directories(eye PRIVATE ${ALSA_INCLUDE_DIRS})
 

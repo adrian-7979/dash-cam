@@ -10,6 +10,9 @@
 // Header file for GPIO access
 #include <pigpio.h>
 
+// Header file for threads
+#include <pthread.h>
+
 // Defining constants
 #define buzzer 16 // buzzer attached to GPIO 16 (Pin 36)
 #define led_eye_detect 20 // LED attached to GPIO 20 (Pin38)
@@ -19,13 +22,14 @@
 
 // Header file for playing sounds (.wav files)
 #include <alsa/asoundlib.h>
+
 // Function to play a sound file using ALSA
-void playSound(const char* filePath) {
+void playSound() {
     // Open PCM device for playback
     snd_pcm_t *pcm_handle;
     if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
         std::cerr << "Error opening PCM device" << std::endl;
-        return;
+        //return;
     }
 
     // Set PCM parameters
@@ -43,11 +47,12 @@ void playSound(const char* filePath) {
     snd_pcm_prepare(pcm_handle);
 
     // Open the sound file
+    const char* filePath = "sound.wav";
     FILE *wav_file = fopen(filePath, "r");
     if (!wav_file) {
         std::cerr << "Error opening sound file: " << filePath << std::endl;
         snd_pcm_close(pcm_handle);
-        return;
+        pthread_exit(NULL);    //return;
     }
 
     // Read and play the sound file
@@ -66,6 +71,7 @@ void playSound(const char* filePath) {
     fclose(wav_file);
     snd_pcm_drain(pcm_handle);
     snd_pcm_close(pcm_handle);
+    pthread_exit(NULL);
 }
 
 // Function to initialize GPIO
@@ -94,18 +100,26 @@ void cleanupGPIO() {
     gpioTerminate();
 }
 
+
+
+
 // Callback function
 struct MyCallback : Libcam2OpenCV::Callback {
    int frameCount=0;
    int frameEyeShut=0;
    // Load the pre-trained face and eye cascade classifiers
     cv::CascadeClassifier face_cascade, eye_cascade;
-    
+
+   // initialise threads
+   pthread_t soundThread;
+   
+
     virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata) {
 	
      // initialise GPIO 
     initializeGPIO();
-     
+    
+
      if(frameCount ==0){
         if(!face_cascade.load("haarcascade_frontalface_alt.xml") || !eye_cascade.load("haarcascade_eye.xml")) {
          std::cerr << "Error loading cascade classifiers!" << std::endl;
@@ -175,17 +189,18 @@ struct MyCallback : Libcam2OpenCV::Callback {
     
     // if eyes are closed for short time
     if(frameEyeShut>3){
-        // Play sound file 
-        playSound("sound.wav");
         // Turn ON buzzer 
         gpioWrite(buzzer, ON);
-         
+        
+        // Play sound file on different thread, fewer times
+        if((frameEyeShut%3)==0)
+        pthread_create(&soundThread, NULL, (void* (*)(void*))playSound, NULL); 
     }
 
     // if eyes are closed for long time even after buzzer rings, trigger eCall system
     if(frameEyeShut>15){
-        // Turn OFF relay(eCall system) 
-        gpioWrite(relay, OFF);
+        // Turn ON relay(eCall system) 
+        gpioWrite(relay, ON);
         frameEyeShut=0; //reset counter
     }
     
@@ -198,6 +213,7 @@ struct MyCallback : Libcam2OpenCV::Callback {
 
 // Main program
 int main(int argc, char *argv[]) {
+    
     
     
     // create an instance of the camera class
@@ -219,7 +235,7 @@ int main(int argc, char *argv[]) {
     Libcam2OpenCVSettings settings;
 
     // set the framerate (default is variable framerate)
-    settings.framerate = 30;
+    settings.framerate = 10;
 
     // start the camera with these settings
     camera.start(settings);
