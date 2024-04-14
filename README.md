@@ -18,6 +18,9 @@ The contributors to this repository are [Vibhav Madhusudan](https://github.com/v
 
 The TaskBoard of the project can be found in the Projects tab of this repository.
 
+### Social media links:
+[Instagram](https://www.instagram.com/zappsnap_ug/?igsh=MWh4eWdqcnAxMWRkYQ%3D%3D)
+
 ## Prerequisites
 
 ```
@@ -42,5 +45,8 @@ sudo make install
 The output file "eye" is in the subdirectory "eye-monitor", and can be run
 in Linux terminal with the command, after changing the directory to "eye-monitor"
 ```
-./eye
+cd eye-monitor
+sudo ./eye
 ```
+The output file can also be made to run at start-up using instructions shown [here](https://www.tutorialspoint.com/run-a-script-on-startup-in-linux#:~:text=Make%20the%20script%20file%20executable,scriptname%20defaults"%20in%20the%20terminal.)
+
