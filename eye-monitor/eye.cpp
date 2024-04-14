@@ -1,4 +1,17 @@
+// Standard library Header file
 #include <unistd.h>
+#include <iostream>
+
+// Header file for GPIO access, user functions and pin declarations
+#include <pigpio.h>
+#include "gpio_fns.h"
+
+// Header file for threads
+#include <pthread.h>
+
+// Header files for playing sounds (.wav files) and playSound() function
+#include <alsa/asoundlib.h>
+#include "sound.h"
 
 // Header file for Camera interfacing
 #include "libcam2opencv.h"
@@ -7,101 +20,13 @@
 // Header file for OpenCV
 #include <opencv2/opencv.hpp>
 
-// Header file for GPIO access
-#include <pigpio.h>
+// Definitions:
+// Number of frames(with eyes not detected) after which buzzer rings
+#define MIN_FRAMES_B 4
+// Number of frames(with eyes not detected) after which relay switches ON 
+#define MIN_FRAMES_R 20
 
-// Header file for threads
-#include <pthread.h>
-
-// Defining constants
-#define buzzer 16 // buzzer attached to GPIO 16 (Pin 36)
-#define led_eye_detect 20 // LED attached to GPIO 20 (Pin38)
-#define relay 21 // relay attached to GPIO 21 (Pin40) (optional - to trigger eCall system)
-#define ON 1 
-#define OFF 0
-
-// Header file for playing sounds (.wav files)
-#include <alsa/asoundlib.h>
-
-// Function to play a sound file using ALSA
-void playSound() {
-    // Open PCM device for playback
-    snd_pcm_t *pcm_handle;
-    if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
-        std::cerr << "Error opening PCM device" << std::endl;
-        //return;
-    }
-
-    // Set PCM parameters
-    snd_pcm_hw_params_t *params;
-    snd_pcm_hw_params_alloca(&params);
-    snd_pcm_hw_params_any(pcm_handle, params);
-    snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
-    snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S16_LE); // Signed 16-bit little-endian
-    snd_pcm_hw_params_set_channels(pcm_handle, params, 2); // Stereo
-    unsigned int sample_rate = 44100;
-    snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sample_rate, 0);
-    snd_pcm_hw_params(pcm_handle, params);
-
-    // Prepare PCM device
-    snd_pcm_prepare(pcm_handle);
-
-    // Open the sound file
-    const char* filePath = "sound.wav";
-    FILE *wav_file = fopen(filePath, "r");
-    if (!wav_file) {
-        std::cerr << "Error opening sound file: " << filePath << std::endl;
-        snd_pcm_close(pcm_handle);
-        pthread_exit(NULL);    //return;
-    }
-
-    // Read and play the sound file
-    const int buffer_size = 4096;
-    char buffer[buffer_size];
-    size_t read_size;
-
-    while ((read_size = fread(buffer, 1, buffer_size, wav_file)) > 0) {
-        if (snd_pcm_writei(pcm_handle, buffer, read_size / 4) < 0) { // Dividing by 4 because sample size is 16-bit = 2 bytes
-            std::cerr << "Error playing audio" << std::endl;
-            break;
-        }
-    }
-
-    // Close PCM handle and sound file
-    fclose(wav_file);
-    snd_pcm_drain(pcm_handle);
-    snd_pcm_close(pcm_handle);
-    pthread_exit(NULL);
-}
-
-// Function to initialize GPIO
-void initializeGPIO() {
-    if (gpioInitialise() < 0) {
-        std::cerr << "Error initializing GPIO library" << std::endl;
-        return;
-    }
-
-    // Set GPIO pin modes
-    gpioSetMode(buzzer, PI_OUTPUT);
-    gpioSetMode(led_eye_detect, PI_OUTPUT);
-    gpioSetMode(relay, PI_OUTPUT);
-
-    return;
-}
-
-// Function to clean up GPIO
-void cleanupGPIO() {
-    // Set GPIO pins back to input mode
-    gpioSetMode(buzzer, PI_INPUT);
-    gpioSetMode(led_eye_detect, PI_INPUT);
-    gpioSetMode(relay, PI_INPUT);
-
-    // Terminate pigpio library
-    gpioTerminate();
-}
-
-
-
+/**********************************************************************/
 
 // Callback function
 struct MyCallback : Libcam2OpenCV::Callback {
@@ -110,16 +35,16 @@ struct MyCallback : Libcam2OpenCV::Callback {
    // Load the pre-trained face and eye cascade classifiers
     cv::CascadeClassifier face_cascade, eye_cascade;
 
-   // initialise threads
+   // initialise sound thread
    pthread_t soundThread;
    
-
+   // function that runs whenever frame is received
     virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata) {
 	
      // initialise GPIO 
     initializeGPIO();
     
-
+    // load cascades at the 0th frame 
      if(frameCount ==0){
         if(!face_cascade.load("haarcascade_frontalface_alt.xml") || !eye_cascade.load("haarcascade_eye.xml")) {
          std::cerr << "Error loading cascade classifiers!" << std::endl;
@@ -146,13 +71,13 @@ struct MyCallback : Libcam2OpenCV::Callback {
         std::vector<cv::Rect> eyes;
         eye_cascade.detectMultiScale(face_roi, eyes);
 
-        // Draw rectangles and circles on required ROI (for debugging, uncomment below lines)
-   //   cv::rectangle(frame, face, cv::Scalar(255, 0, 0), 2); // Draw rectangle around face
-   //     for (const auto& eye : eyes) {
-   //         cv::Point eye_center(face.x + eye.x + eye.width/2, face.y + eye.y + eye.height/2);
-   //         int radius = cvRound((eye.width + eye.height) * 0.25);
-   //         cv::circle(frame, eye_center, radius, cv::Scalar(0, 255, 0), 2); // Draw circle around eye
-   //     }
+   // Testing: Draw rectangles and circles on required ROI (for debugging, uncomment below lines)
+   //cv::rectangle(frame, face, cv::Scalar(255, 0, 0), 2); // Draw rectangle around face
+   //for (const auto& eye : eyes) {
+   //     cv::Point eye_center(face.x + eye.x + eye.width/2, face.y + eye.y + eye.height/2);
+   //     int radius = cvRound((eye.width + eye.height) * 0.25);
+   //     cv::circle(frame, eye_center, radius, cv::Scalar(0, 255, 0), 2); // Draw circle around eye
+   //}
         // Display the resulting image (for debugging, uncomment below lines)
    //	 cv::imshow("Faces and Eyes Detection", frame);
    //  	 cv::waitKey(0);
@@ -188,17 +113,17 @@ struct MyCallback : Libcam2OpenCV::Callback {
     }    
     
     // if eyes are closed for short time
-    if(frameEyeShut>3){
+    if(frameEyeShut>= MIN_FRAMES_B){
         // Turn ON buzzer 
         gpioWrite(buzzer, ON);
         
         // Play sound file on different thread, fewer times
-        if((frameEyeShut%3)==0)
+        if((frameEyeShut%8)==0 || (frameEyeShut==MIN_FRAMES_B) )
         pthread_create(&soundThread, NULL, (void* (*)(void*))playSound, NULL); 
     }
 
     // if eyes are closed for long time even after buzzer rings, trigger eCall system
-    if(frameEyeShut>15){
+    if(frameEyeShut>=MIN_FRAMES_R){
         // Turn ON relay(eCall system) 
         gpioWrite(relay, ON);
         frameEyeShut=0; //reset counter
@@ -210,6 +135,8 @@ struct MyCallback : Libcam2OpenCV::Callback {
     }
     
 };
+
+/**********************************************************************/
 
 // Main program
 int main(int argc, char *argv[]) {

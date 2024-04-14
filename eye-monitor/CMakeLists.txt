@@ -59,5 +59,3 @@ target_link_libraries(eye Threads::Threads)
 # Link wav sound player library
 target_link_libraries(eye ${ALSA_LIBRARY})
 target_include_directories(eye PRIVATE ${ALSA_INCLUDE_DIRS})
-
-#set_property(TARGET eye PROPERTY CXX_STANDARD 11)
