@@ -1,7 +1,9 @@
 # Driver Monitor System
-A camera system that detects if the driver is asleep/unconscious and rings an alarm.
-It detects the eyes of the driver, and if the eyes are not detected for some amount of consecutive
-frames, the alarm sound is played using the AUX port of the Raspberry Pi.
+A Driver Monitor System github page by Vibhav Madhusudhan, Hamirdhavalle Dhandapani Vijaya, Adrian Dsilva and Ohemaa Adebi Bawuah.
+
+This page is about Real Time Embedded Programming course at the University of Glasgow.Our Assignment is to create a project that calls for real time programming under GNU/Linux on a Raspberry Pi.
+
+The project that we have selected is Driver Monitor system . It is a camera system that sounds an alert when it senses that the driver is asleep or unconscious. It detects the drivers  eyes and records the number of consecutive frames in which the eyes are not identified. The alarm sound is played using the AUX port of the Raspberry Pi, libopencv-dev libcamera-dev was used for the camera and ALSA to play the alarm sound.
 
 
 ## Acknowledgements
