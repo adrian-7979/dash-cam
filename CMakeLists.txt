@@ -43,3 +43,11 @@ install(TARGETS cam2opencv EXPORT cam2opencv-targets
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# Generate Doxyfile and associated target
+find_package(Doxygen)
+set(DOXYGEN_GENERATE_LATEX YES)
+doxygen_add_docs(
+doc
+${PROJECT_SOURCE_DIR}
+)
