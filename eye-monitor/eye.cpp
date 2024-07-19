@@ -28,6 +28,10 @@
 
 /**********************************************************************/
 
+// Declaring the object as a global variable for use in multiple functions
+AudioPlayer player();
+    
+
 // Callback function
 struct MyCallback : Libcam2OpenCV::Callback {
    int frameCount=0;
@@ -119,7 +123,7 @@ struct MyCallback : Libcam2OpenCV::Callback {
         
         // Play sound file on different thread, fewer times
         if((frameEyeShut%8)==0 || (frameEyeShut==MIN_FRAMES_B) )
-        pthread_create(&soundThread, NULL, (void* (*)(void*))playSound, NULL); 
+        pthread_create(&soundThread, NULL, AudioPlayer::threadFunc, NULL); 
     }
 
     // if eyes are closed for long time even after buzzer rings, trigger eCall system
