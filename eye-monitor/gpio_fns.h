@@ -14,8 +14,25 @@
 #define ON 1 
 #define OFF 0
 
+// Class defined to initialise, de-initialise and operate GPIO pins
+class GPIOctrl {
+public:
+    GPIOctrl();
+    ~GPIOctrl();
+    void initializeGPIO();
+    void cleanupGPIO();
+    
+};    
+
+GPIOctrl::GPIOctrl() {
+}
+
+GPIOctrl::~GPIOctrl() {
+    cleanupGPIO();
+}
+
 // Function to initialize GPIO
-void initializeGPIO() {
+void GPIOctrl::initializeGPIO() {
     if (gpioInitialise() < 0) {
         std::cerr << "Error initializing GPIO library" << std::endl;
         return;
@@ -30,7 +47,7 @@ void initializeGPIO() {
 }
 
 // Function to clean up GPIO
-void cleanupGPIO() {
+void GPIOctrl::cleanupGPIO() {
     // Set GPIO pins back to input mode
     gpioSetMode(buzzer, PI_INPUT);
     gpioSetMode(led_eye_detect, PI_INPUT);

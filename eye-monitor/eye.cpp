@@ -19,6 +19,7 @@
 
 // Header file for OpenCV
 #include <opencv2/opencv.hpp>
+#include "eye_detection.h"
 
 // Definitions:
 // Number of frames(with eyes not detected) after which buzzer rings
@@ -29,72 +30,33 @@
 /**********************************************************************/
 
 // Declaring the object as a global variable for use in multiple functions
-AudioPlayer player();
-    
+AudioPlayer player;
+GPIOctrl gpioCtrl;     
+EyeDetection eyeDetection;
 
 // Callback function
 struct MyCallback : Libcam2OpenCV::Callback {
-   int frameCount=0;
-   int frameEyeShut=0;
+   int frameCount=0; // counter for number of frames
+   int frameEyeShut=0; // counter for number of consecutive frames with eyes closed
+
+// run function when frame is received
+    virtual void hasFrame(cv::Mat &frame, const libcamera::ControlList &metadata)	
+{	
    // Load the pre-trained face and eye cascade classifiers
     cv::CascadeClassifier face_cascade, eye_cascade;
 
    // initialise sound thread
    pthread_t soundThread;
    
-   // function that runs whenever frame is received
-    virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata) {
-	
-     // initialise GPIO 
-    initializeGPIO();
-    
-    // load cascades at the 0th frame 
-     if(frameCount ==0){
-        if(!face_cascade.load("haarcascade_frontalface_alt.xml") || !eye_cascade.load("haarcascade_eye.xml")) {
-         std::cerr << "Error loading cascade classifiers!" << std::endl;
-         throw std::runtime_error("Error loading cascade classifiers");
-    } }
-
-
-    // Convert image to grayscale
-    cv::Mat gray_image;
-    cv::cvtColor(frame, gray_image, cv::COLOR_BGR2GRAY);
-
-    // Detect faces in the grayscale image
-    std::vector<cv::Rect> faces;
-    face_cascade.detectMultiScale(gray_image, faces);
-
-    // Flag to track if eyes were detected
-    bool eyes_detected = false;
-
-    // For each face, detect eyes
-    for (const auto& face : faces) {
-
-        // Define region of interest (ROI) for eyes within the face
-        cv::Mat face_roi = gray_image(face);
-        std::vector<cv::Rect> eyes;
-        eye_cascade.detectMultiScale(face_roi, eyes);
-
-   // Testing: Draw rectangles and circles on required ROI (for debugging, uncomment below lines)
-   //cv::rectangle(frame, face, cv::Scalar(255, 0, 0), 2); // Draw rectangle around face
-   //for (const auto& eye : eyes) {
-   //     cv::Point eye_center(face.x + eye.x + eye.width/2, face.y + eye.y + eye.height/2);
-   //     int radius = cvRound((eye.width + eye.height) * 0.25);
-   //     cv::circle(frame, eye_center, radius, cv::Scalar(0, 255, 0), 2); // Draw circle around eye
-   //}
-        // Display the resulting image (for debugging, uncomment below lines)
-   //	 cv::imshow("Faces and Eyes Detection", frame);
-   //  	 cv::waitKey(0);
-   //  	 cv::destroyAllWindows();
-
-        // Check if eyes were detected within the face
-        if (!eyes.empty()) {
-            eyes_detected = true; // Set flag to true if eyes were detected for at least one face
-        }
-    }
+  
+    // Scan face and detect if eyes are open
+    bool eyes_detected = eyeDetection.Frame(frame, metadata,frameCount);
 
     // Display FrameCount
     std::cout << frameCount << std::endl;
+ 
+     // initialise GPIO 
+    gpioCtrl.initializeGPIO();
     
     // Display appropriate message based on eyes detection
     if (eyes_detected) {
@@ -136,8 +98,7 @@ struct MyCallback : Libcam2OpenCV::Callback {
     std::cout << "Eyes shut for "<< frameEyeShut << " frames" << std::endl; //print counter value
 
 	frameCount++;
-    }
-    
+ }   
 };
 
 /**********************************************************************/
@@ -151,7 +112,7 @@ int main(int argc, char *argv[]) {
     Libcam2OpenCV camera;
     
     // initialise GPIO 
-    initializeGPIO();
+    gpioCtrl.initializeGPIO();
     
     
     std::cout << "Press any key to stop" << std::endl;
@@ -166,7 +127,7 @@ int main(int argc, char *argv[]) {
     Libcam2OpenCVSettings settings;
 
     // set the framerate (default is variable framerate)
-    settings.framerate = 10;
+    settings.framerate = 30;
 
     // start the camera with these settings
     camera.start(settings);
@@ -178,7 +139,7 @@ int main(int argc, char *argv[]) {
     camera.stop();
     
     // set the GPIO pins back to input mode
-    cleanupGPIO();
+    gpioCtrl.cleanupGPIO();
 
     // that's it!
     printf("\n");
