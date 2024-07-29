@@ -1,5 +1,3 @@
-/* Includes playSound function that plays *.wav files  */
-
 // Standard library Header files
 #include <unistd.h>
 #include <iostream>

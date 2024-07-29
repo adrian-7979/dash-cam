@@ -41,13 +41,16 @@ struct MyCallback : Libcam2OpenCV::Callback {
    int frameEyeShut=0; // counter for number of consecutive frames with eyes closed
 
 // run function when frame is received
-    virtual void hasFrame(cv::Mat &frame, const libcamera::ControlList &metadata)	
+    virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata)	
 {	
    // Load the pre-trained face and eye cascade classifiers
     cv::CascadeClassifier face_cascade, eye_cascade;
+    
+    // Create a modifiable copy of the frame 
+    cv::Mat FRAME = frame.clone();
      
     // Scan face and detect if eyes are open
-    bool eyes_detected = runFrameInThread(eyeDetection, frame, metadata, frameCount);
+    bool eyes_detected = runFrameInThread(eyeDetection, FRAME, metadata, frameCount);
 
     // Display FrameCount
     std::cout << frameCount << std::endl;
