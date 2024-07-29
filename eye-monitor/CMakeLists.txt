@@ -27,9 +27,8 @@ endif()
 # For playing sound
 find_package(ALSA REQUIRED)
 
-#for threading
+#for multi threading
 find_package(Threads REQUIRED)
-
 
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.. ${LIBCAMERA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS})
 include(GNUInstallDirs)

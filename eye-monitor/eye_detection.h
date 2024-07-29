@@ -65,3 +65,22 @@ private:
     }
 };
 
+// Function to run eye detection in separate thread
+bool runFrameInThread(EyeDetection& eyeDetection, cv::Mat& frame, const libcamera::ControlList& metadata, int frameCount) {
+    // Create a promise and future to get the result from the thread
+    std::promise<bool> promise;
+    std::future<bool> future = promise.get_future();
+
+    // Create a thread to run the Frame method
+    std::thread frameThread([&eyeDetection, &frame, &metadata, frameCount, &promise]() {
+        bool result = eyeDetection.Frame(frame, metadata, frameCount);
+        promise.set_value(result);
+    });
+
+    // Join the thread back to the main thread
+    frameThread.join();
+
+    // Get the result from the future
+    return future.get();
+}
+

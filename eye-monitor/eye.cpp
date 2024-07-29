@@ -6,8 +6,9 @@
 #include <pigpio.h>
 #include "gpio_fns.h"
 
-// Header file for threads
-#include <pthread.h>
+// Header file for multi-threading, and returning values from threads
+#include <thread>
+#include <future>
 
 // Header files for playing sounds (.wav files) and playSound() function
 #include <alsa/asoundlib.h>
@@ -44,13 +45,9 @@ struct MyCallback : Libcam2OpenCV::Callback {
 {	
    // Load the pre-trained face and eye cascade classifiers
     cv::CascadeClassifier face_cascade, eye_cascade;
-
-   // initialise sound thread
-   pthread_t soundThread;
-   
-  
+     
     // Scan face and detect if eyes are open
-    bool eyes_detected = eyeDetection.Frame(frame, metadata,frameCount);
+    bool eyes_detected = runFrameInThread(eyeDetection, frame, metadata, frameCount);
 
     // Display FrameCount
     std::cout << frameCount << std::endl;
@@ -84,8 +81,8 @@ struct MyCallback : Libcam2OpenCV::Callback {
         gpioWrite(buzzer, ON);
         
         // Play sound file on different thread, fewer times
-        if((frameEyeShut%8)==0 || (frameEyeShut==MIN_FRAMES_B) )
-        pthread_create(&soundThread, NULL, AudioPlayer::threadFunc, NULL); 
+        if((frameEyeShut%10)==0 || (frameEyeShut==MIN_FRAMES_B) )
+            std::thread soundThread(&AudioPlayer::threadFunc, nullptr); 
     }
 
     // if eyes are closed for long time even after buzzer rings, trigger eCall system
