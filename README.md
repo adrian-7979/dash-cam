@@ -22,9 +22,7 @@ The original code can be found at [https://gist.github.com/ghedo/963382](https:/
 The contributors to this repository are [Vibhav Madhusudan](https://github.com/vibhavmadhusudhan99), [Hamirdhavalle DV](https://github.com/Hamirdhavalle-dv), [Adebibawuah](https://github.com/Adebibawuah) and [Adrian Dsilva](https://github.com/adrian-7979)
 
 ## Documentation
-Documentation of this project is described in [Driver Monitoring System Documentation](./eye-monitor/Documentation.md)
-
-The document 
+The workflow of this project is described in [Driver Monitoring System Documentation](./eye-monitor/Documentation.md)
 
 The TaskBoard of the project can be found in the Projects tab of this repository.
 
@@ -80,7 +78,7 @@ The following components were used for the project.
 
 * 5mm Stereo Jack Audio Aux cable - Used for connecting to vehicle speaker for alert sound.
 
-* Green LED - for indication of eye movement with Forward voltage < 3.3V.
+* Green and Red LED - for indication of eye movement with Forward voltage < 3.3V.
 
 * 150ohm resistor - Used for LED current limitation
 
@@ -93,9 +91,9 @@ This image represents the block diagram of the project idea:
 ![plot](./materials/block_diagram.jpg)
 
 This image shows pin configuration on the Raspberry Pi for assembly:
-![plot](./materials/pi-pins_Configuration.png)
+![plot](./materials/pi-pins_Configuration.jpg)
 
-'Note: For demenostration purposes, a red **LED** was utilized in the hardware setup in place of **relay**.`
+**`Note: For demenostration purposes, red LED was utilized in the hardware setup in place of relay.`**
 
 ### Social media links:
 We have shared project updates and progress in [Instagram](https://www.instagram.com/zappsnap_ug/]
