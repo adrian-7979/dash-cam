@@ -16,11 +16,11 @@ public:
     static void* threadFunc(void* arg); // Static member function
 
 private:
-    void openPCMDevice();
-    void setPCMParams();
-    void openSoundFile();
+    void openPCMDevice();        // checks for and open the PCM device
+    void setPCMParams();         // configures the PCM device for playing sound
+    void openSoundFile();        
     void readAndPlaySound();
-    void cleanup();
+    void cleanup();             // resets configuration and closes the PCM device
 
     const char* filePath = "sound.wav";
     snd_pcm_t *pcm_handle;
