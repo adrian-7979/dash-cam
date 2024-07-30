@@ -21,7 +21,13 @@ The original code can be found at [https://gist.github.com/ghedo/963382](https:/
 
 The contributors to this repository are [Vibhav Madhusudan](https://github.com/vibhavmadhusudhan99), [Hamirdhavalle DV](https://github.com/Hamirdhavalle-dv), [Adebibawuah](https://github.com/Adebibawuah) and [Adrian Dsilva](https://github.com/adrian-7979)
 
+## Documentation
+Documentation of this project is described in [Driver Monitoring System Documentation](./eye-monitor/Documentation.md)
+
+The document 
+
 The TaskBoard of the project can be found in the Projects tab of this repository.
+
 ## Software
 ### Prerequisties/Dependencies
 
@@ -77,6 +83,8 @@ The following components were used for the project.
 * LEDs - for indication of eye movement with Forward voltage < 3.3V.
 
 * 150ohm resistor - Used for LED current limitation
+
+* Relay -  for connecting with e-Call system incase of emergency.
 
 ### Hardware Assembly
 
