@@ -35,12 +35,25 @@ AudioPlayer player;
 GPIOctrl gpioCtrl;     
 EyeDetection eyeDetection;
 
-// Callback function
+/**
+ * @struct MyCallback
+ * @brief A callback structure for handling frames from the camera.
+ *
+ * This structure inherits from Libcam2OpenCV::Callback and overrides the
+ * hasFrame method to process frames received from the camera.
+ */
+
 struct MyCallback : Libcam2OpenCV::Callback {
    int frameCount=0; // counter for number of frames
    int frameEyeShut=0; // counter for number of consecutive frames with eyes closed
 
-// run function when frame is received
+   /**
+    * @brief Function to process each frame received from the camera.
+    *
+    * @param frame The input image frame.
+    * @param metadata Metadata associated with the frame.
+    */
+
     virtual void hasFrame(const cv::Mat &frame, const libcamera::ControlList &metadata)	
 {	
    // Load the pre-trained face and eye cascade classifiers
@@ -103,7 +116,16 @@ struct MyCallback : Libcam2OpenCV::Callback {
 
 /**********************************************************************/
 
-// Main program
+/**
+ * @brief Main program function.
+ *
+ * Initializes the camera, registers the callback, and processes frames until a key is pressed.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The command-line arguments.
+ * @return Returns 0 upon successful completion.
+ */
+
 int main(int argc, char *argv[]) {
     
     
