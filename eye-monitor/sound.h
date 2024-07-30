@@ -1,48 +1,119 @@
-/* Includes playSound function that plays *.wav files  */
+/**
+ * @file AudioPlayer.h
+ * @brief Header file containing the AudioPlayer class definition and implementation for playing .wav files using ALSA.
+ */
 
-// standard header file
 #include <iostream>
-
-// Header file for playing sounds (.wav files)
 #include <alsa/asoundlib.h>
 
-// Class defined to play a sound file using ALSA
+/**
+ * @class AudioPlayer
+ * @brief A class to play a sound file using ALSA.
+ *
+ * This class provides methods to open a PCM device, configure it, and play a .wav sound file.
+ */
+
 class AudioPlayer {
 public:
+    /**
+     * @brief Constructor for the AudioPlayer class.
+     *
+     * Initializes the AudioPlayer object.
+     */
     AudioPlayer();
+
+   /**
+     * @brief Destructor for the AudioPlayer class.
+     *
+     * Cleans up resources used by the AudioPlayer.
+     */
     ~AudioPlayer();
+
+     /**
+     * @brief Plays the sound file.
+     *
+     * This method orchestrates the opening of the PCM device, setting parameters, reading the sound file, and playing it.
+     */
     void playSound();
-    
+
+    /**
+     * @brief Static member function is used as a thread function.
+     *
+     * @param arg A pointer to an AudioPlayer object.
+     * @return A nullptr.
+     *
+     * This function calls the playSound() method of the AudioPlayer object.
+     */
     static void* threadFunc(void* arg); // Static member function
 
 private:
-    void openPCMDevice();        // checks for and open the PCM device
-    void setPCMParams();         // configures the PCM device for playing sound
-    void openSoundFile();        
-    void readAndPlaySound();
-    void cleanup();             // resets configuration and closes the PCM device
+    /**
+     * @brief Opens the PCM device for playback.
+     *
+     * Checks for and opens the PCM device.
+     */
 
-    const char* filePath = "sound.wav";
-    snd_pcm_t *pcm_handle;
-    FILE *wav_file;
+    void openPCMDevice();        
+    /**
+     * @brief Configures the PCM device for playing sound.
+     *
+     * Sets the parameters for the PCM device.
+     */
+    void setPCMParams();         
+
+    /**
+     * @brief Opens the sound file for reading.
+     *
+     * Opens the .wav file specified by filePath.
+     */
+    void openSoundFile();        
+    
+    /**
+     * @brief Reads and plays the sound file.
+     *
+     * Reads data from the .wav file and writes it to the PCM device for playback.
+     */
+    void readAndPlaySound();
+    
+    /**
+     * @brief Cleans up resources.
+     *
+     * Resets configuration and closes the PCM device and sound file.
+     */
+    void cleanup();             
+
+    const char* filePath = "sound.wav"; //< Path to the .wav sound file.
+    snd_pcm_t *pcm_handle; ///< Handle for the PCM device.
+    FILE *wav_file; ///< File pointer for the .wav sound file.
 }; 
 
 //AudioPlayer::AudioPlayer(const char* filePath) : filePath(filePath), pcm_handle(nullptr), wav_file(nullptr) {
+
+/**
+ * @brief Constructor and Destructor implementation.
+ */
 AudioPlayer::AudioPlayer() {
 }
-
 
 AudioPlayer::~AudioPlayer() {
     cleanup();
 }
 
+/**
+ * @brief Static member function implementation.
+ *
+ * @param arg A pointer to an AudioPlayer object.
+ * @return A nullptr.
+ */
 void* AudioPlayer::threadFunc(void* arg) {
     AudioPlayer* player = static_cast<AudioPlayer*>(arg);
     player->playSound();
     return nullptr;
 }
 
-// Public function which plays the sound
+/**
+ * @brief Public function which plays the sound.
+ */
 void AudioPlayer::playSound() {
     openPCMDevice();
     setPCMParams();
@@ -51,7 +122,9 @@ void AudioPlayer::playSound() {
     cleanup();
 }
 
-// Open PCM device for playback
+/**
+ * @brief Opens the PCM device for playback.
+ */
 void AudioPlayer::openPCMDevice() {
     if (snd_pcm_open(&pcm_handle, "default", SND_PCM_STREAM_PLAYBACK, 0) < 0) {
         std::cerr << "Error opening PCM device" << std::endl;
@@ -59,7 +132,9 @@ void AudioPlayer::openPCMDevice() {
     }
 }
 
-// Set parameters for the PCM device
+/**
+ * @brief Sets parameters for the PCM device.
+ */
 void AudioPlayer::setPCMParams() {
     snd_pcm_hw_params_t *params;
     snd_pcm_hw_params_alloca(&params);
@@ -73,7 +148,9 @@ void AudioPlayer::setPCMParams() {
     snd_pcm_prepare(pcm_handle);
 }
 
-// Open the sound file for reading
+/**
+ * @brief Opens the sound file for reading.
+ */
 void AudioPlayer::openSoundFile() {
     wav_file = fopen(filePath, "r");
     if (!wav_file) {
@@ -83,7 +160,9 @@ void AudioPlayer::openSoundFile() {
     }
 }
 
-// Read and play the sound file
+/**
+ * @brief Reads and plays the sound file.
+ */
 void AudioPlayer::readAndPlaySound() {
     const int buffer_size = 4096;
     char buffer[buffer_size];
@@ -97,7 +176,9 @@ void AudioPlayer::readAndPlaySound() {
     }
 }
 
-// Close PCM handle and sound file
+/**
+ * @brief Close PCM handle and sound file and cleans up.
+ */
 void AudioPlayer::cleanup() {
     if (wav_file) {
         fclose(wav_file);
