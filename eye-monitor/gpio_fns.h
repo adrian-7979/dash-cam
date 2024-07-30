@@ -12,16 +12,47 @@
 #define ON 1 
 #define OFF 0
 
-// Class defined to initialise, de-initialise and operate GPIO pins
+/**
+ * @class GPIOctrl
+ * @brief A class defined to initialize, de-initialize, and operate GPIO pins.
+ *
+ * This class provides methods to initialize the GPIO pins, set their modes,
+ * and clean up the GPIO settings when done.
+ */
+
 class GPIOctrl {
 public:
+    /**
+     * @brief Constructor for GPIOctrl class.
+     *
+     * Initializes the GPIO control object.
+     */
+
     GPIOctrl();
+    
+    /**
+     * @brief Destructor for GPIOctrl class.
+     *
+     * Cleans up GPIO settings upon object destruction.
+     */
+
     ~GPIOctrl();
+    /**
+     * @brief Initializes the GPIO pins.
+     * Sets up the GPIO library and configures the pin modes.
+     *
+     * @brief Cleans up the GPIO pins.
+     * Resets the GPIO pins to input mode and terminates the GPIO library.
+     */
     void initializeGPIO();
+
     void cleanupGPIO();
     
 };    
 
+/**
+ * @brief Constructor and destructor implementation.
+ */
 GPIOctrl::GPIOctrl() {
 }
 
@@ -29,7 +60,12 @@ GPIOctrl::~GPIOctrl() {
     cleanupGPIO();
 }
 
-// Function to initialize GPIO
+/**
+ * @brief Function to Initialize the GPIO pins.
+ *
+ * This function initializes the pigpio library and sets the mode for each GPIO pin.
+ * If the library initialization fails, an error message is printed.
+ */
 void GPIOctrl::initializeGPIO() {
     if (gpioInitialise() < 0) {
         std::cerr << "Error initializing GPIO library" << std::endl;
@@ -44,7 +80,12 @@ void GPIOctrl::initializeGPIO() {
     return;
 }
 
-// Function to clean up GPIO
+/**
+ * @brief Cleans up the GPIO pins.
+ *
+ * This function resets the GPIO pins to input mode and terminates the pigpio library.
+ */
+    
 void GPIOctrl::cleanupGPIO() {
     // Set GPIO pins back to input mode
     gpioSetMode(buzzer, PI_INPUT);
