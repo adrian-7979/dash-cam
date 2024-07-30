@@ -4,7 +4,7 @@ A Driver Monitor System github page, developed by Adrian Dsilva, Vibhav Madhusud
 
 As part of Real Time Embedded Programming course at the University of Glasgow. The main task is to develop a project that calls for real time programming under GNU/Linux on a Raspberry Pi. 
 
-The project we settled on is a robust Driver Monitoring system . The system aims to prevent drowsy or unconscious driving. By utilizing a camera system, it continously analyzes the driver's eye state and triggers an alert sound sensing if the driver is asleep or unconscious. This idealogy is carried out through recording the number of consecutive frames in which the eyes are not identified(detected) using `libopencv-dev` `libcamera-dev` and an alert sound is played through Raspberry Pi's AUX port using ALSA(Advanced Linux Sound Architecture) ensuring the driver is notified promptly.
+The project we settled on is a robust Driver Monitoring system . The system aims to prevent drowsy or unconscious driving. By utilizing a camera system, it continously analyzes the driver's eye state and triggers an alert sound sensing if the driver is asleep or unconscious. This idealogy is carried out through recording the number of consecutive frames trhough a 5MP camera, in which the eyes are identified(detected) using `libopencv-dev` `libcamera-dev`. An alert sound note is played through Raspberry Pi's AUX port using ALSA(Advanced Linux Sound Architecture) ensuring the driver is notified promptly. Furthermore, a relay is also connected in parallel to trigger the e-call system switch of the vehicle incase of the eyes not identited for more than a specific number of consecutive frames captured.
 
 This git repository contains the code required to run this project and instructions on how to build it for both hardware and software.
 
@@ -80,18 +80,23 @@ The following components were used for the project.
 
 * 5mm Stereo Jack Audio Aux cable - Used for connecting to vehicle speaker for alert sound.
 
-* LEDs - for indication of eye movement with Forward voltage < 3.3V.
+* Green LED - for indication of eye movement with Forward voltage < 3.3V.
 
 * 150ohm resistor - Used for LED current limitation
 
-* Relay -  for connecting with e-Call system incase of emergency.
+#### **Optional**
+* 3.3V Relay -  for connecting with e-Call system incase of emergency.
 
 ### Hardware Assembly
 
 This image represents the block diagram of the project idea:
 ![plot](./materials/block_diagram.jpg)
 
- 
+This image shows pin configuration on the Raspberry Pi for assembly:
+![plot](./materials/pi-pins_Configuration.png)
+
+'Note: For demenostration purposes, a red **LED** was utilized in the hardware setup in place of **relay**.`
+
 ### Social media links:
 We have shared project updates and progress in [Instagram](https://www.instagram.com/zappsnap_ug/]
 
