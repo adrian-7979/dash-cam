@@ -59,10 +59,37 @@ target_link_libraries(eye Threads::Threads)
 target_link_libraries(eye ${ALSA_LIBRARY})
 target_include_directories(eye PRIVATE ${ALSA_INCLUDE_DIRS})
 
-# Generate Doxyfile and associated target
-find_package(Doxygen)
+# Find Doxygen
+find_package(Doxygen REQUIRED)
+
+# Set Doxygen options
+set(DOXYGEN_GENERATE_HTML YES)
 set(DOXYGEN_GENERATE_LATEX YES)
-doxygen_add_docs(
-doc
-${PROJECT_SOURCE_DIR}
+
+# Specify the input and output for Doxyfile
+set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+# Ensure output directory exists
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc)
+
+# Configure the Doxyfile
+configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+
+# Add a custom target to run Doxygen
+add_custom_target(doc_doxygen ALL
+    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Generating documentation with Doxygen"
+    VERBATIM
 )
+
+# Add source directories to Doxygen input
+doxygen_add_docs(
+    doc
+    ${PROJECT_SOURCE_DIR}
+    COMMENT "Generating documentation with Doxygen"
+)
+
+# Optionally, install the documentation
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html DESTINATION doc)
