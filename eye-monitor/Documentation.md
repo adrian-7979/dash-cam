@@ -1,4 +1,4 @@
-# Driver Monitoring System Documentaion
+# Driver Monitoring System Documentation
 
 Here are the brief description for the classes its methods, structs, callbacks used in the driver-monitoring system code. It also comprises multi-threading to handle audio playback without blocking the main execution flow.
 
