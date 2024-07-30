@@ -58,3 +58,11 @@ target_link_libraries(eye Threads::Threads)
 # Link wav sound player library
 target_link_libraries(eye ${ALSA_LIBRARY})
 target_include_directories(eye PRIVATE ${ALSA_INCLUDE_DIRS})
+
+# Generate Doxyfile and associated target
+find_package(Doxygen)
+set(DOXYGEN_GENERATE_LATEX YES)
+doxygen_add_docs(
+doc
+${PROJECT_SOURCE_DIR}
+)
